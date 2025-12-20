@@ -1,0 +1,143 @@
+const User = require("../models/User")
+const bcrypt = require('bcryptjs');
+const DoctorProfile =require('../models/DoctorProfile')// Import DoctorProfile model
+const jwt = require('jsonwebtoken');
+const Patient = require("../models/Patient")
+
+// Helper function to generate Token
+const generateToken = (user) => {
+    return jwt.sign(
+        { id: user._id, role: user.role }, 
+        process.env.JWT_SECRET_KEY, 
+        { expiresIn: '15d' }
+    );
+};
+
+// ==========================================
+// REGISTER USER (Handles both Patient & Doctor)
+// ==========================================
+exports.register = async (req, res) => {
+    const { email, password, username, role } = req.body;
+
+    try {
+        // 1. Check if email already exists
+        let user = await User.findOne({ email });
+
+        if (user) {
+            return res.status(400).json({ success: false, message: 'User already exists' });
+        }
+
+        // 2. Hash the password
+        const salt = await bcrypt.genSalt(10);
+        const hashPassword = await bcrypt.hash(password, salt);
+
+        // 3. Create the user
+        // If the role is not provided in the body, it defaults to 'patient' (defined in Schema)
+        user = new User({
+            username,
+            email,
+            password: hashPassword,
+            role
+        });
+
+        const savedUser = await user.save();
+
+        // If the user is a doctor, create a corresponding DoctorProfile
+        if (role === 'doctor') {
+            const doctorProfile = new DoctorProfile({
+                user: savedUser._id,
+                // Set default or placeholder values for required fields
+                specialization: 'General Practitioner', // Default specialization
+                fullName: username, // Use username as full name for now
+                experienceYears: 0, // Default experience
+                // The licenseNumber is required, so we need to provide a placeholder
+                // It's marked as select: false in the schema, so it won't be returned by default
+                licenseNumber: 'N/A', // Placeholder license number
+                consultationFee: 0 // Default consultation fee
+            });
+            await doctorProfile.save(); 
+        }
+        // If the user is a patients, create a corresponding patientProfile
+        else if(role == "patient"){
+            const patientProfile = new Patient({
+                user : savedUser._id,
+                displayName:username,
+                username:username
+            })
+
+            await patientProfile.save()
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            message: 'User successfully created',
+            savedUser
+            // Optionally, you might want to return the user data or a token here
+            // For now, just a success message
+        });
+
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Internal server error, try again' });
+    }
+};
+
+// ==========================================
+// LOGIN USER
+// ==========================================
+exports.login = async (req, res) => {
+    const { email, password } = req.body; // Extract explicit credentials only
+
+    try {
+        // 1. Find user
+        const user = await User.findOne({ email });
+        console.log(user)
+
+        // 2. Check if user exists
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        // 3. Compare Password
+        const isPasswordMatch = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordMatch) {
+            return res.status(400).json({ success: false, message: "Invalid credentials" });
+        }
+
+        // 4. Generate Token
+        const token = generateToken(user);
+
+        // 5. Exclude password from the response (Security best practice)
+        const { password: userPassword, role, ...rest } = user._doc;
+
+        res.status(200).json({ 
+            success: true, 
+            message: "Successfully logged in", 
+            token, 
+            data: { ...rest }, 
+            role 
+            
+        });
+
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed to login", error: err.message });
+    }
+};
+
+exports.TokenValidation = async(req, res) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized: user not found"
+    });
+  }
+
+  const user = await User.findById(req.user.id).select('-password'); // Fetch user data excluding password
+
+  res.status(200).json({
+    success: true,
+    message: `Welcome user ${user.email}`,
+    user: user, // Send the full user object
+    role: user.role
+  });
+};
