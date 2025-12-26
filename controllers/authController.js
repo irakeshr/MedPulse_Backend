@@ -9,30 +9,29 @@ const generateToken = (user) => {
     return jwt.sign(
         { id: user._id, role: user.role }, 
         process.env.JWT_SECRET_KEY, 
-        { expiresIn: '15d' }
+        { expiresIn: process.env.JWT_EXPIRE }
     );
 };
-
-// ==========================================
+ 
 // REGISTER USER (Handles both Patient & Doctor)
-// ==========================================
+ 
 exports.register = async (req, res) => {
     const { email, password, username, role } = req.body;
 
     try {
-        // 1. Check if email already exists
+        //   Check if email already exists
         let user = await User.findOne({ email });
 
         if (user) {
             return res.status(400).json({ success: false, message: 'User already exists' });
         }
 
-        // 2. Hash the password
+        //   Hash the password
         const salt = await bcrypt.genSalt(10);
         const hashPassword = await bcrypt.hash(password, salt);
 
-        // 3. Create the user
-        // If the role is not provided in the body, it defaults to 'patient' (defined in Schema)
+        //  Create the user
+        //  the role is not provided in the body, it defaults to 'patient' (defined in Schema)
         user = new User({
             username,
             email,
@@ -81,9 +80,9 @@ exports.register = async (req, res) => {
     }
 };
 
-// ==========================================
+ 
 // LOGIN USER
-// ==========================================
+ 
 exports.login = async (req, res) => {
     const { email, password } = req.body; // Extract explicit credentials only
 
@@ -107,8 +106,8 @@ exports.login = async (req, res) => {
         // 4. Generate Token
         const token = generateToken(user);
 
-        // 5. Exclude password from the response (Security best practice)
-        const { password: userPassword, role, ...rest } = user._doc;
+        //  Exclude password from the response  
+        const { password: userPassword, role, ...rest } = user._doc; // I diStructure the user and store role and the password  into userPassword,...rest
 
         res.status(200).json({ 
             success: true, 

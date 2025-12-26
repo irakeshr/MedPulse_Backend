@@ -1,37 +1,35 @@
 const mongoose = require('mongoose');
 
 const doctorProfileSchema = new mongoose.Schema({
-  // 1. LINK TO AUTH
-  user: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true, 
-    unique: true 
-  },
-
-  // 2. PROFESSIONAL IDENTITY
-  fullName: { type: String, required: true }, // "Dr. A. Patel"
-  specialization: { type: String, required: true }, // "Cardiologist"
-  qualifications: [{ type: String }], // ["MBBS", "MD"]
+  // ... (Previous fields remain the same)
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+  fullName: { type: String, required: true },
+  specialization: { type: String, required: true },
+  qualifications: [{ type: String }],
   experienceYears: { type: Number, required: true },
-  
-  // 3. VERIFICATION
-  licenseNumber: { type: String, required: true, select: false }, // Hidden from public
-  verificationStatus: { 
-    type: String, 
-    enum: ['pending', 'verified', 'rejected'], 
-    default: 'pending' 
-  },
+  licenseNumber: { type: String, required: true, select: false },
+  verificationStatus: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
 
-  // 4. DASHBOARD STATS
-  // Used to populate the "Welcome back" dashboard
+  // 1. PENDING REVIEWS (The "To-Do" List)
+  reviewQueue: [{ 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Post' 
+  }],
+
+  // 2. SOLVED CASES (The "Done" List) - NEW ADDITION
+  // We move the post ID here after the doctor comments
+  solvedCases: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Post'
+  }],
+
+  // 3. DASHBOARD STATS
   stats: {
     pendingReviews: { type: Number, default: 0 },
     casesSolved: { type: Number, default: 0 },
-    responseTime: { type: String, default: '2h' } // Average response time
+    responseTime: { type: String, default: '2h' }
   },
 
-  // 5. SETTINGS
   consultationFee: { type: Number, default: 0 },
   about: { type: String }
 

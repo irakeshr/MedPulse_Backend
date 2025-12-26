@@ -17,8 +17,8 @@ const postSchema = new mongoose.Schema({
   // 3. CLASSIFICATION & METADATA
   community: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Community',
-    required: true 
+    ref: 'Community', 
+    require: false
   },
   tags: [{ type: String }], // e.g. ["#Migraine", "#LightSensitivity"]
   

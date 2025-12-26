@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const authRoutes = require("./routes/authRoutes");
+const postRoutes= require ('./routes/postRoutes')
 const {Server} = require('socket.io')
 const http =require("http")
 const socketHandler = require('./sockets/socketHandler')
@@ -21,6 +22,7 @@ socketHandler(io) //  logic is inside this function // pass the initialized sock
 app.use(express.json());
 app.use(cors());
 app.use('/api/auth', authRoutes)
+app.use('/api/user', postRoutes)
 
 // --- GLOBAL ERROR HANDLING ---
 // Catches errors anywhere in the app so the server doesn't crash
