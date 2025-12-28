@@ -1,6 +1,7 @@
 const Post = require("../models/Post");
 const DoctorProfile = require("../models/DoctorProfile");
 const cloudinary = require("../config/cloudinary");
+const checkMedicalContent = require("../utils/medicalChecker");
 
 // Cloudinary stream helper
 const uploadFromBuffer = (buffer) => {
@@ -18,15 +19,33 @@ const uploadFromBuffer = (buffer) => {
 
 const userPost = async (req, res) => {
   try {
-    const { title, description, stream, tag, isAnonymous } = req.body;
 
-    //Validation FIRST
-    if (!title || !description || !stream) {
+
+    const { title, description, stream, tags, isAnonymous } = req.body;
+
+       if (!title || !description || !stream) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields",
+        message: "Missing required fields(title,description,stream)",
       });
     }
+
+      const aiContent = `
+title: ${title}
+description: ${description}
+tags: ${tags}
+  `;
+
+  const isMedical = await checkMedicalContent(aiContent);
+
+  if (isMedical !== "true") {
+    return res.status(400).json({
+      message: "Only medical-related posts are allowed"
+    });
+  }
+
+    //Validation FIRST
+ 
 
     let imageUrl = null;
 
@@ -42,7 +61,7 @@ const userPost = async (req, res) => {
       title,
       content: description,
       symptomType: stream,
-      tags: tag ? [tag] : [],
+      tags: tags ? tags : [],
       images: imageUrl ? [imageUrl] : [],
       isAnonymous: Boolean(isAnonymous),
       status: "open",
@@ -61,6 +80,7 @@ const userPost = async (req, res) => {
         $inc: { "stats.pendingReviews": 1 },
       }
     );
+    console.log(savedPost)
 
     return res.status(201).json({
       success: true,
