@@ -1,21 +1,11 @@
 const Post = require("../models/Post");
 const DoctorProfile = require("../models/DoctorProfile");
-const cloudinary = require("../config/cloudinary");
+ 
 const checkMedicalContent = require("../utils/medicalChecker");
+const uploadFromBuffer = require("../utils/uploadFromBuffer");
 
 // Cloudinary stream helper hello world
-const uploadFromBuffer = (buffer) => {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder: "posts" },
-      (err, result) => {
-        if (err) return reject(err);
-        resolve(result);
-      }
-    );
-    stream.end(buffer);
-  });
-};
+ 
 
 const userPost = async (req, res) => {
   try {

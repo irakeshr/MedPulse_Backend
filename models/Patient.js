@@ -10,6 +10,7 @@ const patientSchema = new mongoose.Schema({
   },
 
   // 2. PROFILE IDENTITY
+  profileImage:{ type:String},
   displayName: { type: String, required: true }, // "Rakesh R."
   username: { type: String, unique: true }, // "@irakesh.r"
   location: { type: String }, // "KERALA, PKD"
