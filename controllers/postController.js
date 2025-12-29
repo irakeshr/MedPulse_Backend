@@ -3,7 +3,7 @@ const DoctorProfile = require("../models/DoctorProfile");
 const cloudinary = require("../config/cloudinary");
 const checkMedicalContent = require("../utils/medicalChecker");
 
-// Cloudinary stream helper
+// Cloudinary stream helper hello world
 const uploadFromBuffer = (buffer) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
