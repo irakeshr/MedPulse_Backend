@@ -3,26 +3,27 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const authRoutes = require("./routes/authRoutes");
-const postRoutes= require ('./routes/postRoutes')
-const {Server} = require('socket.io')
-const http =require("http")
-const socketHandler = require('./sockets/socketHandler')
+const postRoutes = require("./routes/postRoutes");
+const userRoutes = require("./routes/userRoutes");
+const { Server } = require("socket.io");
+const http = require("http");
+const socketHandler = require("./sockets/socketHandler");
 require("./config/db");
 
-
-const httpServer = http.createServer(app); //initialize the socket.io 
-const io = new Server(httpServer,{
-cors:{
- origin:"*",
- method:['GET','POST']
-}
-})
-socketHandler(io) //  logic is inside this function // pass the initialized socket
+const httpServer = http.createServer(app); //initialize the socket.io
+const io = new Server(httpServer, {
+  cors: {
+    origin: "*",
+    method: ["GET", "POST"],
+  },
+});
+socketHandler(io); //  logic is inside this function // pass the initialized socket
 
 app.use(express.json());
 app.use(cors());
-app.use('/api/auth', authRoutes)
-app.use('/api/user', postRoutes)
+app.use("/api/auth", authRoutes);
+app.use("/api/user", postRoutes,userRoutes);
+ 
 
 // --- GLOBAL ERROR HANDLING ---
 // Catches errors anywhere in the app so the server doesn't crash
@@ -30,8 +31,8 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
     success: false,
-    message: 'Server Error',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    message: "Server Error",
+    error: process.env.NODE_ENV === "development" ? err.message : undefined,
   });
 });
 

@@ -40,6 +40,8 @@ tags: ${tags}
     let imageUrl = null;
 
     // Upload image ONLY if exists
+
+    
     if (req.file) {
       const uploadResult = await uploadFromBuffer(req.file.buffer);
       imageUrl = uploadResult.secure_url;
