@@ -1,9 +1,11 @@
+const Patient = require("../models/Patient");
 const Patients = require("../models/Patient");
 const User = require("../models/User");
 const uploadFromBuffer = require("../utils/uploadFromBuffer");
 
 const UpdateUserProfile = async (req, res) => {
   try {
+     const userId = req.user.id; // Assuming req.user.id contains the User ID
     const {
       displayName,
       bio,
@@ -14,30 +16,31 @@ const UpdateUserProfile = async (req, res) => {
       bloodGroup,
       dateOfBirth,
     } = req.body;
-    const userId = req.user.id; // Assuming req.user.id contains the User ID
+
+    const updateData = {
+      displayName,
+      bio,
+      location,
+      chronicConditions,
+      allergies,
+      healthTags,
+      bloodGroup,
+      dateOfBirth,
+    };
+   
    
 
     // Upload image ONLY if exists
      let imageUrl = null;
     if (req.file) {
       const uploadResult = await uploadFromBuffer(req.file.buffer);
-      imageUrl = uploadResult.secure_url;
+      updateData.profileImage = uploadResult.secure_url;
     }
 
     // Find the patient profile associated with the user ID
     const patientProfile = await Patients.findOneAndUpdate(
       { user: userId },
-      {
-        displayName,
-        bio,
-        location,
-        chronicConditions,
-        allergies,
-        healthTags,
-        bloodGroup,
-        dateOfBirth,
-        profileImage:imageUrl
-      },
+    { $set: updateData },
       { new: true, runValidators: true } // Return the updated document and run schema validators ->
       //  bcoz the auto validate work only once ,when the first creation .
     );
@@ -62,5 +65,25 @@ const UpdateUserProfile = async (req, res) => {
       .json({ success: false, message: "Server Error", error: error.message });
   }
 };
+const getUserProfile= async(req,res)=>{
+  try {
+    const patientProfile = await Patients.findOne({ user: req.user.id });
+    if (!patientProfile) {
+      return res.status(404).json({
+        success: false,
+        message: "Patient profile not found."
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Patient profile fetched successfully.",
+      patientProfile,
+      role:req.user.role
+    });
+  } catch (error) {
+    console.error("Error fetching patient profile:", error);
+    return res.status(500).json({ success: false, message: "Server Error", error: error.message });
+  }
+}
 
-module.exports = { UpdateUserProfile };
+module.exports = { UpdateUserProfile ,getUserProfile};

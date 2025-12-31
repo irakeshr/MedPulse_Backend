@@ -13,6 +13,11 @@ const userSchema = new mongoose.Schema({
   },
   
   // Common for everyone
+  stats: {
+    postCount: { type: Number, default: 0 },
+    helpfulPostCount: { type: Number, default: 0 },
+    commentCount: { type: Number, default: 0 },
+  },
   profilePicture: { type: String }, // e.g. "avatar.jpg"
   isVerified: { type: Boolean, default: false }, // Email verification
   

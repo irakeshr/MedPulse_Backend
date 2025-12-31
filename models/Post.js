@@ -40,6 +40,7 @@ const postSchema = new mongoose.Schema({
   
   // 6. INTERACTION STATS
   // We cache these counters here for performance (faster feed loading)
+  
   commentCount: { type: Number, default: 0 },
   doctorResponded: { type: Boolean, default: false }, // Triggers the "Doctor Responded" badge
   upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] // Array of user IDs who liked

@@ -5,7 +5,7 @@ const upload = require('../middleware/multerMiddleware');
 
 const route=express.Router();
 
-route.post("/user-post",auth,upload.single("image"),userPost);
+route.post("/user-post",auth,upload.single("profileImage"),userPost);
 
 
 module.exports=route;

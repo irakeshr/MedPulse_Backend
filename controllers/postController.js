@@ -3,6 +3,7 @@ const DoctorProfile = require("../models/DoctorProfile");
  
 const checkMedicalContent = require("../utils/medicalChecker");
 const uploadFromBuffer = require("../utils/uploadFromBuffer");
+const User = require("../models/User");
 
 // Cloudinary stream helper hello world
  
@@ -41,7 +42,7 @@ tags: ${tags}
 
     // Upload image ONLY if exists
 
-    
+
     if (req.file) {
       const uploadResult = await uploadFromBuffer(req.file.buffer);
       imageUrl = uploadResult.secure_url;
@@ -60,6 +61,7 @@ tags: ${tags}
     });
 
     const savedPost = await newPost.save();
+    await User.findByIdAndUpdate(req.user.id, { $inc: { 'stats.postCount': 1 } });
 
     // Notify doctors
     await DoctorProfile.updateMany(
