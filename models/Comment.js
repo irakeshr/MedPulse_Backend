@@ -22,10 +22,21 @@ const commentSchema = new mongoose.Schema({
 
   content: { type: String, required: true },
 
+  // For nested comments (replies)
+  parentCommentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Comment',
+    default: null // Null for top-level comments
+  },
+
   // SPECIAL DOCTOR FEATURES
   // If author is a doctor, this is treated as a "Medical Review"
   isMedicalReview: { type: Boolean, default: false },
   
+  // Interaction stats
+  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Users who liked this comment
+  reports: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Report' }], // Reports on this comment
+
   // Gamification
   helpfulVotes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 

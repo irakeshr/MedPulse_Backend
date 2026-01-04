@@ -37,13 +37,24 @@ const postSchema = new mongoose.Schema({
     enum: ['open', 'resolved', 'closed'],
     default: 'open'
   },
+
+    likesCount: {
+    type: Number,
+    default: 0,
+  },
   
   // 6. INTERACTION STATS
   // We cache these counters here for performance (faster feed loading)
+
+  likedBy: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },],
   
   commentCount: { type: Number, default: 0 },
   doctorResponded: { type: Boolean, default: false }, // Triggers the "Doctor Responded" badge
-  upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] // Array of user IDs who liked
+  // Array of user IDs who liked
 
 }, { timestamps: true });
 
