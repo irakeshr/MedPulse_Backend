@@ -22,7 +22,8 @@ socketHandler(io); //  logic is inside this function // pass the initialized soc
 app.use(express.json());
 app.use(cors());
 app.use("/api/auth", authRoutes);
-app.use("/api/user", postRoutes,userRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/posts", postRoutes );
  
 
 // --- GLOBAL ERROR HANDLING ---

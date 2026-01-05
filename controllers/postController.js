@@ -1,5 +1,7 @@
 const Post = require("../models/Post");
 const DoctorProfile = require("../models/DoctorProfile");
+const Patient = require("../models/Patient");
+const Comment = require("../models/Comment");
 
 const checkMedicalContent = require("../utils/medicalChecker");
 const uploadFromBuffer = require("../utils/uploadFromBuffer");
@@ -88,23 +90,40 @@ tags: ${tags}
     });
   }
 };
-
+//get post
 const getPost = async (req, res) => {
   try {
     const posts = await Post.find({})
       .populate({
         path: "author",
-        select: "username profilePicture role",
+        select: "username  role",
       })
-      .sort({ createdAt: -1 }); // Sort by newest first
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const userIds = posts.map((p) => p.author?._id).filter(Boolean);
+
+    const patients = await Patient.find({ user: { $in: userIds } })
+      .select("user profileImage")
+      .lean();
+
+    const patientMap = {};
+    patients.forEach((p) => {
+      patientMap[p.user.toString()] = p.profileImage;
+    });
+    // Sort by newest first
 
     const modifiedPosts = posts.map((post) => {
       if (post.isAnonymous) {
         post.author = {
+          profileImage: "",
           username: "Anonymous",
-          profilePicture:
-            "https://res.cloudinary.com/dtu7f73yq/image/upload/v1709743789/anonymous_profile_picture.png",
           role: post.author?.role,
+        };
+      } else {
+        post.author = {
+          ...post.author,
+          profileImage: patientMap[post.author?._id?.toString()] || null,
         };
       }
       return post;
@@ -123,37 +142,106 @@ const getPost = async (req, res) => {
   }
 };
 
-  const likePost = async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const {postId } = req.body;
-      console.log("Body=>>>>>>>>>>>>>>>>>",req)
-      const post = await Post.findById(postId);
-      if (!post) {
-        return res.status(404).json({ message: "Post not found" });
-      }
-
-      const alreadyLiked = post.likedBy.includes(userId); // Corrected method name
-      if (alreadyLiked) {
-        post.likedBy.pull(userId); // Corrected property name
-        post.likesCount -= 1;
-      } else {
-        post.likedBy.push(userId);
-        post.likesCount += 1;
-      }
-
-      await post.save();
-      return res.status(200).json({
-        success: true,
-        postId,
-        likesCount: post.likesCount,
-        liked: !alreadyLiked,
-      })
-
-
-    } catch (error) {
-      res.status(500).json({ message: "Like failed", error: error.message });
+const likePost = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { postId } = req.body;
+    console.log("Body=>>>>>>>>>>>>>>>>>", req);
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
     }
-  };
 
-module.exports = { userPost, getPost,likePost };
+    const alreadyLiked = post.likedBy.includes(userId); // Corrected method name
+    if (alreadyLiked) {
+      post.likedBy.pull(userId); // Corrected property name
+      post.likesCount -= 1;
+    } else {
+      post.likedBy.push(userId);
+      post.likesCount += 1;
+    }
+
+    await post.save();
+    return res.status(200).json({
+      success: true,
+      postId,
+      likesCount: post.likesCount,
+      liked: !alreadyLiked,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Like failed", error: error.message });
+  }
+};
+
+const addComment = async (req, res) => {
+  try {
+    console.log(req.body);
+    const userId = req.user.id;
+    const { postId } = req.params; // Correctly extract postId from req.params
+    const { text } = req.body;
+    const { role } = req.user;
+
+    if (!text?.trim()) {
+      return res.status(400).json({ message: "comment Required!!" });
+    }
+
+    const comment = await Comment.create({
+      content: text,
+      authorRole: role,
+      author: userId,
+      post: postId,
+    });
+
+    const populatedComment = await comment.populate({
+      path: "author",
+      select: "username role", 
+    });
+
+    return res.status(201).json({
+      success: true,
+      comment: populatedComment,
+    });
+  } catch (error) {
+    console.error("Create comment error:", error);
+    res.status(500).json({ message: "Failed to create comment" });
+  }
+};
+
+
+const getCommentsByPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+
+    const comments = await Comment.find({ post: postId })
+      .populate("author", "username role _id")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const authorIds = comments.map((comment) => comment.author._id);
+    const patients = await Patient.find({ user: { $in: authorIds } })
+      .select("user profileImage")
+      .lean();
+
+    const patientProfileMap = {};
+    patients.forEach((patient) => {
+      patientProfileMap[patient.user.toString()] = patient.profileImage;
+    });
+
+    const commentsWithProfileImages = comments.map((comment) => {
+      const profileImage = patientProfileMap[comment.author._id.toString()] || null;
+      return {
+        ...comment,
+        author: { ...comment.author, profileImage },
+      };
+    });
+    
+    return res.status(200).json({
+      success: true,
+      comments: commentsWithProfileImages,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch comments" });
+  }
+};
+
+module.exports = { userPost, getPost, likePost, addComment,getCommentsByPost };
