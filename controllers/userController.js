@@ -31,7 +31,7 @@ const UpdateUserProfile = async (req, res) => {
    
 
     // Upload image ONLY if exists
-     let imageUrl = null;
+      
     if (req.file) {
       const uploadResult = await uploadFromBuffer(req.file.buffer);
       updateData.profileImage = uploadResult.secure_url;

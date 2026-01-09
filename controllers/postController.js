@@ -20,6 +20,8 @@ const userPost = async (req, res) => {
       });
     }
 
+
+    // Ai content check
     const aiContent = `
 title: ${title}
 description: ${description}
