@@ -8,9 +8,9 @@ const route=express.Router();
 
 route.post("/user-post",auth,checkRole("patient"),upload.single("image"),userPost);
 route.get("/get-post",auth,checkRole("patient"),getPost);
-route.post("/like-unlike",auth,checkRole("patient"),likePost);
-route.post("/:postId/comments",auth,checkRole("patient"),addComment);
-route.post("/:postId/get-comments",auth,checkRole("patient"),getCommentsByPost);
+route.post("/like-unlike",auth,likePost);
+route.post("/:postId/comments",auth ,addComment);
+route.post("/:postId/get-comments",auth,getCommentsByPost);
 
 
 module.exports=route;

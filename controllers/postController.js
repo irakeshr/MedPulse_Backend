@@ -41,7 +41,7 @@ tags: ${tags}
     let imageUrl = null;
 
     // Upload image ONLY if exists
-    console.log("buffer image", req.file.buffer);
+     
 
     if (req.file) {
       const uploadResult = await uploadFromBuffer(req.file.buffer);
