@@ -1,4 +1,6 @@
 const Comment = require('../models/Comment')
+const Patient = require('../models/Patient')
+const DoctorProfile = require('../models/DoctorProfile')
 
  const createComment = async (req, res) => {
     try {
@@ -35,16 +37,42 @@ const getCommentsByPostId = async (req, res) => {
     try {
         const { postId } = req.params;
 
-        const comments = await Comment.find({ post: postId })
-            .populate('author', 'username profilePicture role') // Populate author details
-            .sort({ createdAt: 1 }); // Sort by oldest first
+        const comments = await Comment.find({ post: postId }).populate({
+            path: 'author',
+            select: 'username role',
+        }).sort({ createdAt: 1 }).lean();
 
-        return res.status(200).json({ success: true, message: "Comments fetched successfully.", comments });
+        const authorIds = comments.map((comment) => comment.author._id);
+
+        const patients = await Patient.find({ user: { $in: authorIds } })
+            .select("user profileImage")
+            .lean();
+
+        const doctors = await DoctorProfile.find({ user: { $in: authorIds } })
+            .select("user profileImage")
+            .lean();
+
+        const profileImageMap = {};
+        patients.forEach((p) => {
+            profileImageMap[p.user.toString()] = p.profileImage;  // very important we use often.
+        });
+        doctors.forEach((d) => {
+            profileImageMap[d.user.toString()] = d.profileImage;
+        });
+
+        const commentsWithProfileImages = comments.map((comment) => {
+            const profileImage = profileImageMap[comment.author._id.toString()] || null;
+            return {
+                ...comment,
+                author: { ...comment.author, profileImage },
+            };
+        });
+console.table(commentsWithProfileImages)
+        return res.status(200).json({ success: true, message: "Comments fetched successfully.", comments: commentsWithProfileImages });
 
     } catch (error) {
         console.error("Error fetching comments:", error);
         return res.status(500).json({ success: false, message: "Server Error", error: error.message });
     }
 };
-
 module.exports = { createComment, getCommentsByPostId };

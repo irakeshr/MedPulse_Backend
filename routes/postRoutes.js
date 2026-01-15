@@ -3,6 +3,7 @@ const { userPost, getPost, likePost, addComment, getCommentsByPost } = require('
 const { auth } = require('../middleware/authMiddleware');
 const upload = require('../middleware/multerMiddleware');
 const checkRole = require('../middleware/roleMiddleware');
+const { getCommentsByPostId } = require('../controllers/commentController');
 
 const route=express.Router();
 
@@ -10,7 +11,7 @@ route.post("/user-post",auth,checkRole("patient"),upload.single("image"),userPos
 route.get("/get-post",auth,checkRole("patient"),getPost);
 route.post("/like-unlike",auth,likePost);
 route.post("/:postId/comments",auth ,addComment);
-route.post("/:postId/get-comments",auth,getCommentsByPost);
+route.post("/:postId/get-comments",auth,getCommentsByPostId);
 
 
 module.exports=route;

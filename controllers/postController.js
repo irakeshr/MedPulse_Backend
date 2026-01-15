@@ -95,7 +95,14 @@ tags: ${tags}
 //get post
 const getPost = async (req, res) => {
   try {
-    const posts = await Post.find({})
+    const {search} = req.query;
+    const query ={
+      title:{
+        $regex:search,
+        $options:"i"
+      }
+    }
+    const posts = await Post.find(search ? query : {})
       .populate({
         path: "author",
         select: "username  role",
@@ -143,6 +150,8 @@ const getPost = async (req, res) => {
       .json({ success: false, message: "Server Error", error: error.message });
   }
 };
+
+// get post end
 
 const likePost = async (req, res) => {
   try {
