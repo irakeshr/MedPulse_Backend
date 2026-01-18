@@ -18,6 +18,8 @@ const userSchema = new mongoose.Schema({
     helpfulPostCount: { type: Number, default: 0 },
     commentCount: { type: Number, default: 0 },
   },
+  lastLogin:{type:Date},
+  lastActive:{ type:Date},
   profilePicture: { type: String }, // e.g. "avatar.jpg"
   isVerified: { type: Boolean, default: false }, // Email verification
   

@@ -6,6 +6,7 @@ const authRoutes = require("./routes/authRoutes");
 const postRoutes = require("./routes/postRoutes");
 const userRoutes = require("./routes/userRoutes");
 const doctorRoutes = require("./routes/doctorRoutes")
+const adminRoutes = require("./routes/adminRoutes")
 const { Server } = require("socket.io");
 const http = require("http");
 const socketHandler = require("./sockets/socketHandler");
@@ -26,6 +27,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/posts", postRoutes );
 app.use("/api/doctor", doctorRoutes );
+app.use("/api/admin",adminRoutes);
  
 
 // --- GLOBAL ERROR HANDLING ---
