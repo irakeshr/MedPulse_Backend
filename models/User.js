@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  username:{type: String, required: true },
+  username:{type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   
@@ -14,6 +14,9 @@ const userSchema = new mongoose.Schema({
   
   // Common for everyone
   stats: {
+    approved: {type: String,
+      enum: ["pending", "active", "suspended"],
+      default: "active"},
     postCount: { type: Number, default: 0 },
     helpfulPostCount: { type: Number, default: 0 },
     commentCount: { type: Number, default: 0 },
