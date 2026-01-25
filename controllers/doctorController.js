@@ -106,7 +106,7 @@ const checkDoctorStatus = async (req, res) => {
     }
 
     const isProfileComplete =
-      doctor.licenseNumber && doctor.qualifications && doctor.specialization;
+      doctor.licenseNumber !=="N/A" && doctor.qualifications !=="N/A" && doctor.specialization !=="N/A";
 
     if (isProfileComplete) {
       if (doctor.verificationStatus === "verified") {

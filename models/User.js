@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   // This role determines which profile to load (Patient or Doctor)
   role: { 
     type: String, 
-    enum: ['patient', 'doctor', 'admin'], 
+    enum: ['patient', 'doctor', 'admin','unassigned'], 
     default: 'patient' 
   },
   
