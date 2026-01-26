@@ -7,7 +7,7 @@ const User = require("../models/User");
 
 const getAllDoctors = async (req, res) => {
   try {
-    const doctors = await DoctorSchema.find().populate("user", "email");
+    const doctors = await DoctorSchema.find().populate("user", "email").sort({ updatedAt: -1 });;
 
     if (!doctors || doctors.length === 0) {
       return res
@@ -35,48 +35,102 @@ const getAllDoctors = async (req, res) => {
 
 const getAllUser = async (req, res) => {
   try {
-    const allUsers = await User.find().select("-password");
+    // Get pagination params from query
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 15;
+    const skip = (page - 1) * limit;
 
-    // Calculate the start and end dates for the current month
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    const suspended = await User.countDocuments({ "stats.approved": "suspended" });
+    // Build filter object (for search/filter functionality)
+    const filter = {};
 
-    // Count users created within the current month
-    const usersThisMonthCount = await User.countDocuments({
-      createdAt: { $gte: startOfMonth, $lte: endOfMonth },
-    });
-
-    // total count of users
-
-    const totalCount = await User.countDocuments();
-    const usersCount = {
-      totalCount,
-      usersThisMonthCount,
-      suspendedCount: suspended,
-    };
-
-   
-
-    if (!allUsers || allUsers.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Users not found!!" });
+    // Role filter
+    if (req.query.role && req.query.role !== 'all') {
+      filter.role = req.query.role;
     }
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Data fetched successfully!!",
-        allUsers,
-        usersCount,
+    //  Status filter
+    if (req.query.status && req.query.status !== 'all') {
+      filter['stats.approved'] = req.query.status;
+    }
+
+     if (req.query.search) {
+      filter.$or = [
+        { name: { $regex: req.query.search, $options: 'i' } },
+        { email: { $regex: req.query.search, $options: 'i' } },
+        { username: { $regex: req.query.search, $options: 'i' } }
+      ];
+    }
+
+    // Execute paginated query with filter
+    const allUsers = await User.find(filter)
+      .select("-password")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }); // Newest first
+
+    // Get total count with same filter (for accurate pagination)
+    const totalCount = await User.countDocuments(filter);
+
+    // Calculate monthly stats (only on first page or when requested to optimize)
+    let usersThisMonthCount = 0;
+    let suspendedCount = 0;
+
+    // Only calculate stats if needed (page 1 or specific query param)
+    if (page === 1 || req.query.includeStats === 'true') {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+      // Use Promise.all for parallel execution
+      [usersThisMonthCount, suspendedCount] = await Promise.all([
+        User.countDocuments({
+          createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+        }),
+        User.countDocuments({ "stats.approved": "suspended" })
+      ]);
+    }
+
+    const usersCount = {
+      totalCount: await User.countDocuments(), // Total in database
+      filteredCount: totalCount, // Total matching current filter
+      usersThisMonthCount,
+      suspendedCount
+    };
+
+    // Pagination metadata
+    const pagination = {
+      currentPage: page,
+      totalPages: Math.ceil(totalCount / limit),
+      limit,
+      totalCount,
+      hasNextPage: page < Math.ceil(totalCount / limit),
+      hasPrevPage: page > 1
+    };
+
+    if (!allUsers || allUsers.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No users found",
+        pagination,
+        usersCount
       });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Data fetched successfully",
+      allUsers,
+      usersCount,
+      pagination
+    });
+
   } catch (error) {
-    return res
-      .status(500)
-      .json({ success: false, message: "server error", error });
+    console.error("Error fetching users:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message
+    });
   }
 };
 
