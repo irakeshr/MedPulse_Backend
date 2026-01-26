@@ -51,8 +51,8 @@ exports.register = async (req, res) => {
         specialization: "N/A", // Default specialization
         fullName: username, // Use username as full name for now
         experienceYears: 0,
-        contactNumber:"N/A", 
-        qualifications:"N/A",// Default experience
+        contactNumber: "N/A",
+        qualifications: "N/A", // Default experience
         // The licenseNumber is required, so we need to provide a placeholder
         // It's marked as select: false in the schema, so it won't be returned by default
         licenseNumber: "N/A", // Placeholder license number
@@ -168,8 +168,8 @@ exports.googleAuth = async (req, res) => {
         username: name,
         email,
         password: hashedPassword,
-        role: "unassigned",         
-        profilePicture: picture || "", 
+        role: "unassigned",
+        profilePicture: picture || "",
       });
     }
 
@@ -216,13 +216,14 @@ exports.setUserRole = async (req, res) => {
     const user = await User.findById(userId).session(session);
     if (!user) {
       await session.abortTransaction();
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
-   
     user.role = role;
     await user.save({ session });
- 
+
     if (role === "patient") {
       const exists = await Patient.findOne({ user: userId }).session(session);
       if (!exists) {
@@ -235,13 +236,15 @@ exports.setUserRole = async (req, res) => {
               profileImage: user.profilePicture || "",
             },
           ],
-          { session }
+          { session },
         );
       }
     }
 
     if (role === "doctor") {
-      const exists = await DoctorProfile.findOne({ user: userId }).session(session);
+      const exists = await DoctorProfile.findOne({ user: userId }).session(
+        session,
+      );
       if (!exists) {
         await DoctorProfile.create(
           [
@@ -250,14 +253,14 @@ exports.setUserRole = async (req, res) => {
               displayName: user.username,
               username: user.username,
               profileImage: user.profilePicture || "",
-              specialization:"General Practitioner",
-              contactNumber:"N/A",
+              specialization: "General Practitioner",
+              contactNumber: "N/A",
               experienceYears: 0, // Default experience
-        licenseNumber: "N/A", // Placeholder license number
-        consultationFee: 0,
+              licenseNumber: "N/A", // Placeholder license number
+              consultationFee: 0,
             },
           ],
-          { session }
+          { session },
         );
       }
     }
