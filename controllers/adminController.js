@@ -7,32 +7,48 @@ const User = require("../models/User");
 
 const getAllDoctors = async (req, res) => {
   try {
-    const doctors = await DoctorSchema.find().populate("user", "email").sort({ updatedAt: -1 });;
+    const doctors = await DoctorSchema
+      .find()
+      .populate("user", "email")
+      .sort({ updatedAt: -1 });
 
-    if (!doctors || doctors.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No doctors found." });
+    if (!doctors.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No doctors found.",
+      });
     }
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "All Doctor Profiles fetched successfully.",
-        doctors,
-      });
+    // Count verification statuses
+    const totalUsersCount = await User.countDocuments();
+    const statusCount = {
+      pending: 0,
+      verified: 0,
+      rejected: 0,
+      profilePending: 0,
+    };
+
+    doctors.forEach((doc) => {
+      if (statusCount[doc.verificationStatus] !== undefined) {
+        statusCount[doc.verificationStatus]++;
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "All Doctor Profiles fetched successfully.",
+      doctors,
+      statusCount, //counts here
+      userCount:totalUsersCount
+    });
   } catch (error) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Server Error!!",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Server Error!!",
+      error: error.message,
+    });
   }
 };
-
 const getAllUser = async (req, res) => {
   try {
     // Get pagination params from query

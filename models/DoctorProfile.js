@@ -19,8 +19,8 @@ const doctorProfileSchema = new mongoose.Schema(
     profileBio: { type: String },
     verificationStatus: {
       type: String,
-      enum: ["pending", "verified", "rejected"],
-      default: "pending",
+      enum: ["pending", "verified", "rejected","profilePending"],
+      default: "profilePending",
     },
 
     // 1. PENDING REVIEWS (The "To-Do" List)
